@@ -1,0 +1,82 @@
+---
+- name: EIMS install script
+  hosts: arms
+  become: yes
+  vars_files: vars
+  gather_facts: no
+  tasks:
+    - name: Install libs
+      apt: 
+         name: "{{ item }}"
+         update_cache: yes
+         cache_valid_time: 3600
+      with_items:
+           - libboost-date-time1.62.0
+           - libboost-regex1.62.0
+           - liblua5.3-0
+           - libgdal20
+           - libzmq5
+           - firefox
+           - libreoffice-base
+           - libpam-mount 
+      
+    
+    - name: Create eims folder
+      file: 
+         path: "{{ eims_path }}" 
+         state: directory 
+         owner: "{{ user }}"
+         group: users
+         mode: '0777'
+         recurse: yes
+
+    - name: Create shared folder
+      file: 
+         path: /media/smb 
+         state: directory 
+         owner: "{{ user }}"
+         group: users
+         mode: '0777'
+         recurse: yes
+
+    - name: Unarchive eims 
+      unarchive:
+         src: files/eims.tar.gz
+         dest: "{{ eims_path }}"
+         owner: "{{ user }}"
+         group: users
+         mode: '0777'
+
+    - name: Copy eims config
+      copy:
+         src: files/pam_mount.conf.xml     
+         dest: /etc/security/ 
+         owner: root
+      
+
+    - name: Create Run
+      shell:
+         chdir: "{{ scriptwriters }}"
+         cmd: "./___Creator_runer_eims.sh {{ item }}"
+      with_items:
+        -  -s
+        -  -d
+      notify: "chmod_rights"
+
+#    - name: Create eims path in TopSercret level
+        
+  handlers:
+    - name: chmod_rights
+      file: 
+        path: "{{ eims_path }}" 
+        owner: "{{ user }}"
+        group: users
+        mode: '0777'
+        recurse: yes
+    
+    
+
+
+  
+       
+              

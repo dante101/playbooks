@@ -1,0 +1,58 @@
+version: "2"
+services:
+    grafana:
+      container_name: grafana
+      image: grafana/grafana:latest
+      depends_on:
+        - prometheus
+      links:
+        - prometheus
+      networks: 
+        - my_net
+      restart: unless-stopped
+      environment: 
+                - PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+                - GF_PATHS_CONFIG=/etc/grafana/grafana.ini
+                - GF_PATHS_DATA=/var/lib/grafana
+                - GF_PATHS_HOME=/usr/share/grafana
+                - GF_PATHS_LOGS=/var/log/grafana
+                - GF_PATHS_PLUGINS=/var/lib/grafana/plugins
+                - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    nginx:
+      container_name: nginx
+      image: nginx:latest
+      ports:
+         - "80:80"
+      volumes: 
+           - conf:/etc/nginx/conf.d:rw
+           - nginx:/etc/nginx:rw
+      environment:
+         - NGINX_HOST=dialog
+         - NGINX_PORT=80
+      depends_on: 
+           - grafana
+      links:
+          - grafana
+          - prometheus
+      networks: 
+        - my_net
+      restart: unless-stopped
+    prometheus:
+      container_name: prometheus
+      image: prom/prometheus:latest
+      ports:
+        - "9090:9090"
+      networks: 
+        - my_net
+      volumes: 
+         - prometheus:/prometheus
+      restart: unless-stopped
+       
+volumes:
+  conf:
+  nginx:
+  prometheus:
+networks: 
+  my_net:
+          
+
